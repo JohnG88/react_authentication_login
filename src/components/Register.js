@@ -5,11 +5,19 @@ import {
     faInfoCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+// import axios from "./api/axios";
+import axios from "axios";
+
 // username can start with [a-zA-Z], lowercase a-z or uppercase A-Z and can be followed by {3,23}, 3 to 232 characters that can be [a-zA-Z0-9-_], lowercase a-z or uppercase A-Z or any digits or hyphens or underscores
 const USER_REGEX = /^[a-zA-Z][a-zA-Z0-9-_]{3,23}$/;
 
 // password requires (?=.*[a-z]), one lowercase letter, (?=.*[A-Z]), one uppercase letter, (?=.*[0-9]), one digit, and (?=.*[!@#$%]), one special character, and has to be anywhere from 8 to 24 characters long
 const PWD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%]).{8,24}$/;
+
+// const REGISTER_URL = "/register";
+
+// connect with django
+
 
 const Register = () => {
     const userRef = useRef();
@@ -20,6 +28,9 @@ const Register = () => {
     const [validName, setValidName] = useState(false);
     // If focus on input field
     const [userFocus, setUserFocus] = useState(false);
+
+    const [email, setEmail] = useState("");
+    const [emailFocus, setEmailFocus] = useState(false);
 
     const [pwd, setPwd] = useState("");
     // validates password
@@ -64,7 +75,7 @@ const Register = () => {
     useEffect(() => {
         setErrMsg("");
         // if any of dependencies below of user, pwd, matchPwd are changed then it will clear out error message
-    }, [user, pwd, matchPwd]);
+    }, [user, email, pwd, matchPwd]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -75,8 +86,30 @@ const Register = () => {
             setErrMsg("Invalid Entry");
             return;
         }
-        console.log(user, pwd);
+        try {
+            // const response = await axios.post(REGISTER_URL, JSON.stringify({user,pwd}),
+            const response = await axios.post('http://127.0.0.1:8000/api/users/', JSON.stringify({username:user, email: email, password: pwd}),
+            {
+                headers: {'Content-Type': 'application/json'},
+                // withCredentials: true
+            }
+        );
+        console.log(response.data)
+        console.log(response.accessToken)
+        console.log(JSON.stringify(response))
         setSuccess(true);
+        // clear input fields
+
+        } catch (err) {
+            if (!err?.response) {
+                setErrMsg('No Server Response');
+            } else if (err.response?.status === 409) {
+                setErrMsg("Username taken")
+            } else {
+                setErrMsg("Registration Failed")
+            }
+            errRef.current.focus();
+        }
     };
 
     return (
@@ -144,6 +177,21 @@ const Register = () => {
                             <br /> Letters, numbers, underscores, hyphens
                             allowed.
                         </p>
+
+                        <label htmlFor="email">
+                            Email:
+                        </label>
+                        <input
+                            type="email"
+                            id="email"
+                            onChange={(e) => setEmail(e.target.value)}
+                            value={email}
+                            required
+                            // aria-invalid={validPwd ? "false" : "true"}
+                            // aria-describedby="pwdnote"
+                            onFocus={() => setEmailFocus(true)}
+                            onBlur={() => setEmailFocus(false)}
+                        />
 
                         <label htmlFor="password">
                             Password:

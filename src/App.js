@@ -1,10 +1,54 @@
-import Register from './Register';
+import Register from './components/Register';
+import Login from './components/Login'
+import Home from "./components/Home";
+import Layout from "./components/Layout";
+import Editor from "./components/Editor";
+import Admin from "./components/Admin";
+import Missing from "./components/Missing";
+import Unauthorized from "./components/Unauthorized";
+import Lounge from "./components/Lounge";
+import LinkPage from "./components/LinkPage";
+import {RequireAuth} from './components/RequireAuth';
+import { Routes, Route } from "react-router-dom";
+
+
+const ROLES = {
+  'Superuser': 1,
+  'Staff': 2,
+  'User': 3
+}
 
 function App() {
+
   return (
-    <main className='App'>
-      <Register />
-    </main>
+    <Routes>
+      {/* can now nest components in Layout component */}
+      <Route path="/" element={<Layout />}>
+
+        {/* public routes */}
+        <Route path="login" element={<Login />} />
+        <Route path="register" element={<Register />} />
+        <Route path="linkpage" element={<LinkPage />} />
+        <Route path="unauthorized" element={<Unauthorized />} />
+
+        {/* routes protected */}
+        <Route element={<RequireAuth allowedRoles={[ROLES.User]}/>}>
+          <Route path="/" element={<Home />} />
+        </Route>
+        <Route element={<RequireAuth allowedRoles={[ROLES.Staff]}/>}>
+          <Route path="editor" element={<Editor />} />
+        </Route>
+        <Route element={<RequireAuth allowedRoles={[ROLES.Superuser]}/>}>
+          <Route path="admin" element={<Admin />} />
+        </Route>
+        <Route element={<RequireAuth allowedRoles={[ROLES.Superuser, ROLES.Staff]}/>}>
+          <Route path="lounge" element={<Lounge />} />
+        </Route>
+
+        {/* catch all */}
+        <Route path="*" element={<Missing />} />
+      </Route>
+    </Routes>
   );
 }
 
